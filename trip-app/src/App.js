@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import axios from 'axios';
 import { Layout, Input, Select, Button, List, Typography, Space } from 'antd';
 
@@ -13,7 +13,21 @@ function App() {
     const mapRef = useRef(null);
     const markersRef = useRef([]);
     const infoWindowRef = useRef(null);
+    const backendUrl = process.env.REACT_APP_BACKEND_URL; // 백엔드 URL 환경변수 사용
 
+    useEffect(() => {
+        // 앱이 처음 로드될 때 관광지 데이터 가져오기
+        fetchBackendData();
+    }, []);
+
+    const fetchBackendData = async () => {
+        try {
+            const res = await axios.get(`${backendUrl}/api/data`);
+            console.log("백엔드에서 가져온 데이터:", res.data);
+        } catch (err) {
+            console.error("백엔드 API 호출 실패:", err);
+        }
+    };
     const clearMarkers = () => {
         markersRef.current.forEach(marker => marker.setMap(null));
         markersRef.current = [];
@@ -27,18 +41,22 @@ function App() {
     const handleFetchRandom = async () => {
         clearMarkers();
         try {
-            const res = await axios.get('/api/destination/random', {
+            const res = await axios.get(`${backendUrl}/api/destination/random`, {
                 params: { keyword, contentTypeId }
             });
+
+            console.log("백엔드 응답 데이터:", res.data);
             const { name, x, y } = res.data;
+
             if (!x || !y) {
                 alert('좌표 정보가 없습니다.');
                 return;
             }
+
             setPlace({ name, x, y });
             drawMap(y, x, name);
         } catch (err) {
-            console.error(err);
+            console.error("API 요청 오류:", err);
         }
     };
 
