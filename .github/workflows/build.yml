@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: randomtrip
         uses: actions/checkout@v4
 
       # 📌 GitHub Secrets에서 환경변수 불러와 .env 파일 생성
