@@ -171,6 +171,19 @@ function App() {
                         <Button onClick={() => handleCategorySearch('CT1')}>🎭 문화시설</Button>
                         <Button onClick={() => handleCategorySearch('AT4')}>📷 관광명소</Button>
                     </Space>
+                    <List
+                        bordered
+                        dataSource={places}
+                        style={{ marginTop: '20px' }}
+                        renderItem={item => (
+                            <List.Item>
+                                <List.Item.Meta
+                                    title={<a href={item.place_url} target="_blank" rel="noopener noreferrer">{item.place_name}</a>}
+                                    description={`${item.address_name} (${item.distance}m)`}
+                                />
+                            </List.Item>
+                        )}
+                    />
                 </Space>
             </Content>
             <Footer style={{ textAlign: 'center' }}>Random Trip ©2025 Created by You 🚀</Footer>
