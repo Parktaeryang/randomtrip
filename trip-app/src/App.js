@@ -91,7 +91,6 @@ function App() {
         infoWindowRef.current = infowindow;
     };
 
-    // ✅ 카테고리별 검색
     const handleCategorySearch = async (categoryCode) => {
         clearMarkers();
         try {
@@ -101,13 +100,26 @@ function App() {
                 return;
             }
 
+            console.log("카테고리 검색 요청:", categoryCode, "위치:", x, y);
+
             const res = await axios.get(`${backendUrl}/api/kakao/category`, {
                 params: { category_group_code: categoryCode, x, y, radius: 15000, size: 15, sort: 'distance' }
             });
 
-            const data = res.data.documents;
-            setPlaces(data);
+            console.log("백엔드 응답 데이터:", res.data); // 데이터 구조 확인
 
+            const data = res.data.documents;
+
+            if (!data || data.length === 0) {
+                alert("해당 카테고리의 장소를 찾을 수 없습니다.");
+                setPlaces([]); // 검색 결과가 없으면 빈 배열 설정
+                return;
+            }
+
+            setPlaces(data); // ✅ 목록 업데이트
+            console.log("저장된 places 데이터:", data);
+
+            // ✅ 지도에 마커 추가
             data.forEach(place => {
                 const markerPosition = new window.kakao.maps.LatLng(place.y, place.x);
                 const marker = new window.kakao.maps.Marker({
@@ -119,11 +131,11 @@ function App() {
 
                 const infowindow = new window.kakao.maps.InfoWindow({
                     content: `
-                        <div style="padding:10px;font-size:12px;">
-                            <strong>${place.place_name}</strong><br/>
-                            ${place.address_name}<br/>
-                            <a href="${place.place_url}" target="_blank">상세보기</a>
-                        </div>`
+                    <div style="padding:10px;font-size:12px;">
+                        <strong>${place.place_name}</strong><br/>
+                        ${place.address_name}<br/>
+                        <a href="${place.place_url}" target="_blank">상세보기</a>
+                    </div>`
                 });
 
                 window.kakao.maps.event.addListener(marker, 'click', () => {
@@ -132,10 +144,13 @@ function App() {
                     infoWindowRef.current = infowindow;
                 });
             });
+
         } catch (err) {
             console.error("카테고리 검색 오류:", err);
+            alert("카테고리 검색 중 오류가 발생했습니다.");
         }
     };
+
 
     return (
         <Layout style={{ minHeight: '100vh' }}>
@@ -173,7 +188,7 @@ function App() {
                     </Space>
                     <List
                         bordered
-                        dataSource={places}
+                        dataSource={places || []}  // ✅ places가 undefined일 경우 빈 배열로 설정
                         style={{ marginTop: '20px' }}
                         renderItem={item => (
                             <List.Item>
@@ -184,6 +199,7 @@ function App() {
                             </List.Item>
                         )}
                     />
+
                 </Space>
             </Content>
             <Footer style={{ textAlign: 'center' }}>Random Trip ©2025 Created by You 🚀</Footer>
