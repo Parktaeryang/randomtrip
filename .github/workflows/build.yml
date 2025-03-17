@@ -15,6 +15,6 @@ jobs:
       # 📌 GitHub Secrets에서 환경변수 불러와 .env 파일 생성
       - name: Create .env file
         run: |
-          echo "REACT_APP_KAKAO_JS_KEY=${{ secrets.REACT_APP_KAKAO_JS_KEY }}" > .env
+          echo "REACT_APP_KAKAO_JS_KEY=${{ secrets.REACT_APP_KAKAO_JS_KEY }}" > trip-app/.env
           echo "TOURISM_SERVICE_KEY=${{ secrets.TOURISM_SERVICE_KEY }}" >> .env
           echo "KAKAO_REST_KEY=${{ secrets.KAKAO_REST_KEY }}" >> .env
