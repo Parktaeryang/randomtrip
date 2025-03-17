@@ -1,4 +1,4 @@
-import React, {useState, useRef, useEffect} from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { Layout, Input, Select, Button, List, Typography, Space } from 'antd';
 
@@ -13,21 +13,24 @@ function App() {
     const mapRef = useRef(null);
     const markersRef = useRef([]);
     const infoWindowRef = useRef(null);
-    const backendUrl = process.env.REACT_APP_BACKEND_URL; // 백엔드 URL 환경변수 사용
+    const backendUrl = process.env.REACT_APP_BACKEND_URL; // 환경변수에서 백엔드 URL 가져오기
 
     useEffect(() => {
-        // 앱이 처음 로드될 때 관광지 데이터 가져오기
         fetchBackendData();
     }, []);
 
+    // ✅ 백엔드에서 랜덤 관광지 데이터 가져오기
     const fetchBackendData = async () => {
         try {
-            const res = await axios.get(`${backendUrl}/api/data`);
+            const res = await axios.get(`${backendUrl}/api/destination/random`); // 수정된 부분
             console.log("백엔드에서 가져온 데이터:", res.data);
+            setPlace(res.data);
         } catch (err) {
             console.error("백엔드 API 호출 실패:", err);
         }
     };
+
+    // ✅ 지도 마커 초기화
     const clearMarkers = () => {
         markersRef.current.forEach(marker => marker.setMap(null));
         markersRef.current = [];
@@ -37,7 +40,7 @@ function App() {
         }
     };
 
-
+    // ✅ 랜덤 관광지 검색
     const handleFetchRandom = async () => {
         clearMarkers();
         try {
@@ -60,29 +63,35 @@ function App() {
         }
     };
 
+    // ✅ 카카오 지도 로딩
     const drawMap = (lat, lng, title) => {
-        const kakao = window.kakao;
+        if (!window.kakao || !window.kakao.maps) {
+            console.error("카카오 지도 API가 아직 로드되지 않았습니다.");
+            return;
+        }
+
         const mapContainer = document.getElementById('map');
         const mapOption = {
-            center: new kakao.maps.LatLng(lat, lng),
+            center: new window.kakao.maps.LatLng(lat, lng),
             level: 4,
         };
-        const map = new kakao.maps.Map(mapContainer, mapOption);
+        const map = new window.kakao.maps.Map(mapContainer, mapOption);
         mapRef.current = map;
 
-        const marker = new kakao.maps.Marker({
-            position: new kakao.maps.LatLng(lat, lng)
+        const marker = new window.kakao.maps.Marker({
+            position: new window.kakao.maps.LatLng(lat, lng)
         });
         marker.setMap(map);
         markersRef.current.push(marker);
 
-        const infowindow = new kakao.maps.InfoWindow({
+        const infowindow = new window.kakao.maps.InfoWindow({
             content: `<div style="padding:5px;font-size:14px;">${title}</div>`
         });
         infowindow.open(map, marker);
         infoWindowRef.current = infowindow;
     };
 
+    // ✅ 카테고리별 검색
     const handleCategorySearch = async (categoryCode) => {
         clearMarkers();
         try {
@@ -92,7 +101,7 @@ function App() {
                 return;
             }
 
-            const res = await axios.get('/api/kakao/category', {
+            const res = await axios.get(`${backendUrl}/api/kakao/category`, {
                 params: { category_group_code: categoryCode, x, y, radius: 15000, size: 15, sort: 'distance' }
             });
 
@@ -110,11 +119,11 @@ function App() {
 
                 const infowindow = new window.kakao.maps.InfoWindow({
                     content: `
-            <div style="padding:10px;font-size:12px;">
-              <strong>${place.place_name}</strong><br/>
-              ${place.address_name}<br/>
-              <a href="${place.place_url}" target="_blank">상세보기</a>
-            </div>`
+                        <div style="padding:10px;font-size:12px;">
+                            <strong>${place.place_name}</strong><br/>
+                            ${place.address_name}<br/>
+                            <a href="${place.place_url}" target="_blank">상세보기</a>
+                        </div>`
                 });
 
                 window.kakao.maps.event.addListener(marker, 'click', () => {
@@ -124,7 +133,7 @@ function App() {
                 });
             });
         } catch (err) {
-            console.error(err);
+            console.error("카테고리 검색 오류:", err);
         }
     };
 
@@ -162,20 +171,6 @@ function App() {
                         <Button onClick={() => handleCategorySearch('CT1')}>🎭 문화시설</Button>
                         <Button onClick={() => handleCategorySearch('AT4')}>📷 관광명소</Button>
                     </Space>
-
-                    <List
-                        bordered
-                        dataSource={places}
-                        style={{ marginTop: '20px' }}
-                        renderItem={item => (
-                            <List.Item>
-                                <List.Item.Meta
-                                    title={<a href={item.place_url} target="_blank" rel="noopener noreferrer">{item.place_name}</a>}
-                                    description={`${item.address_name} (${item.distance}m)`}
-                                />
-                            </List.Item>
-                        )}
-                    />
                 </Space>
             </Content>
             <Footer style={{ textAlign: 'center' }}>Random Trip ©2025 Created by You 🚀</Footer>
@@ -184,4 +179,3 @@ function App() {
 }
 
 export default App;
-
