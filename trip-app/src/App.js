@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, {useState, useRef, useEffect, useCallback} from 'react';
 import axios from 'axios';
 import { Layout, Input, Select, Button, List, Typography, Space } from 'antd';
-
+import InfoTooltip from './components/InfoTooltip';
 const { Header, Content, Footer } = Layout;
 const { Option } = Select;
 
@@ -13,24 +13,26 @@ function App() {
     const mapRef = useRef(null);
     const markersRef = useRef([]);
     const infoWindowRef = useRef(null);
-    const backendUrl = process.env.REACT_APP_BACKEND_URL; // 환경변수에서 백엔드 URL 가져오기
+    const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
-    useEffect(() => {
-        fetchBackendData();
-    }, []);
 
-    // ✅ 백엔드에서 랜덤 관광지 데이터 가져오기
-    const fetchBackendData = async () => {
+    const fetchBackendData = useCallback(async () => {
         try {
-            const res = await axios.get(`${backendUrl}/api/destination/random`); // 수정된 부분
-            console.log("백엔드에서 가져온 데이터:", res.data);
+            const res = await axios.get(`${backendUrl}/api/destination/random`);
             setPlace(res.data);
         } catch (err) {
             console.error("백엔드 API 호출 실패:", err);
         }
-    };
+    }, [backendUrl]);
 
-    // ✅ 지도 마커 초기화
+
+    useEffect(() => {
+        fetchBackendData();
+    }, [fetchBackendData]);
+
+
+
+    // 지도 마커 초기화
     const clearMarkers = () => {
         markersRef.current.forEach(marker => marker.setMap(null));
         markersRef.current = [];
@@ -40,7 +42,7 @@ function App() {
         }
     };
 
-    // ✅ 랜덤 관광지 검색
+    // 랜덤 관광지 검색
     const handleFetchRandom = async () => {
         clearMarkers();
         try {
@@ -48,7 +50,7 @@ function App() {
                 params: { keyword, contentTypeId }
             });
 
-            console.log("백엔드 응답 데이터:", res.data);
+
             const { name, x, y } = res.data;
 
             if (!x || !y) {
@@ -63,7 +65,7 @@ function App() {
         }
     };
 
-    // ✅ 카카오 지도 로딩
+    // 카카오 지도 로딩
     const drawMap = (lat, lng, title) => {
         if (!window.kakao || !window.kakao.maps) {
             console.error("카카오 지도 API가 아직 로드되지 않았습니다.");
@@ -100,13 +102,13 @@ function App() {
                 return;
             }
 
-            console.log("카테고리 검색 요청:", categoryCode, "위치:", x, y);
+
 
             const res = await axios.get(`${backendUrl}/api/kakao/category`, {
                 params: { category_group_code: categoryCode, x, y, radius: 15000, size: 15, sort: 'distance' }
             });
 
-            console.log("백엔드 응답 데이터:", res.data); // 데이터 구조 확인
+
 
             const data = res.data.documents;
 
@@ -116,10 +118,9 @@ function App() {
                 return;
             }
 
-            setPlaces(data); // ✅ 목록 업데이트
-            console.log("저장된 places 데이터:", data);
+            setPlaces(data); // 목록 업데이트
 
-            // ✅ 지도에 마커 추가
+            //  지도에 마커 추가
             data.forEach(place => {
                 const markerPosition = new window.kakao.maps.LatLng(place.y, place.x);
                 const marker = new window.kakao.maps.Marker({
@@ -169,12 +170,15 @@ function App() {
                         />
                         <Select placeholder="카테고리 선택" value={contentTypeId} onChange={value => setContentTypeId(value)} allowClear>
                             <Option value="">전체</Option>
-                            <Option value="12">관광지(12)</Option>
-                            <Option value="14">문화시설(14)</Option>
-                            <Option value="28">레포츠(28)</Option>
-                            <Option value="39">음식점(39)</Option>
+                            <Option value="12">관광지</Option>
+                            <Option value="14">문화시설</Option>
+                            <Option value="28">레포츠</Option>
+                            <Option value="39">음식점</Option>
                         </Select>
-                        <Button type="primary" onClick={handleFetchRandom}>검색</Button>
+                        <Space style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Button type="primary" onClick={handleFetchRandom}>검색</Button>
+                            <InfoTooltip />
+                        </Space>
                     </Space.Compact>
 
                     <Typography.Title level={4}>📍 {place.name}</Typography.Title>
@@ -202,7 +206,7 @@ function App() {
 
                 </Space>
             </Content>
-            <Footer style={{ textAlign: 'center' }}>Random Trip ©2025 Created by You 🚀</Footer>
+            <Footer style={{ textAlign: 'center' }}>Created by Strong-Ryang </Footer>
         </Layout>
     );
 }
