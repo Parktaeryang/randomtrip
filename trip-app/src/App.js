@@ -28,12 +28,11 @@ function App() {
     /* 지도 마커 클릭 시 나타나는 정보창(InfoWindow) 객체를 관리하는 Ref 객체 */
     const infoWindowRef = useRef(null);
 
-    /* 백엔드 서버 URL 환경변수로 관리 */
+    /* 서버 환경변수에서 url 동적 로 */
     const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
     /*
-     백엔드로부터 최초로 랜덤 관광지를 받아오는 함수 (비동기 방식)
-     useCallback을 사용하여 함수가 매번 재생성되지 않도록 최적화
+    최초 로딩 시 backendUrl에서 랜덤 관광지 가져오기
     */
     const fetchBackendData = useCallback(async () => {
         try {
