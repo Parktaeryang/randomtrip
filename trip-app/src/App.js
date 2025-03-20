@@ -43,6 +43,20 @@ function App() {
         }
     }, [backendUrl]);
 
+    useEffect(() => {
+    const script = document.createElement('script');
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.REACT_APP_KAKAO_JS_KEY}&libraries=services&autoload=false`;
+    script.async = true;
+
+    script.onload = () => {
+        window.kakao.maps.load(() => {
+            console.log('카카오 지도 SDK 로드 완료!');
+        
+        });
+    };
+
+    document.head.appendChild(script);
+}, []); // 최초 한번만 실행
     /* 컴포넌트 최초 렌더링 시 실행 (백엔드에서 랜덤 관광지 데이터 로딩) */
     useEffect(() => {
         fetchBackendData();
