@@ -5,6 +5,16 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import 'antd/dist/reset.css';
 const root = ReactDOM.createRoot(document.getElementById('root'));
+const loadKakaoScript = () => {
+  const script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.REACT_APP_KAKAO_JS_KEY}&libraries=services`;
+  script.async = true;
+  document.head.appendChild(script);
+};
+
+loadKakaoScript();
+
 root.render(
   <React.StrictMode>
     <App />
