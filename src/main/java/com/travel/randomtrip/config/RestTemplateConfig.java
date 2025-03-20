@@ -13,7 +13,7 @@ public class RestTemplateConfig {
     @Bean
     public RestTemplate restTemplate() {
         RestTemplate restTemplate = new RestTemplate();
-        // UTF-8로 응답을 읽기 위해 가장 앞에 추가
+        // UTF-8
         restTemplate.getMessageConverters()
                 .add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
         return restTemplate;

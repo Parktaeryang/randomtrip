@@ -32,7 +32,7 @@ public class KakaoLocalSearchController {
                 return ResponseEntity.badRequest().body("query 파라미터가 비어있음");
             }
 
-            // 🟢 이 부분을 추가! 백엔드에서도 쿼리 길이 제한
+            //  백엔드에서도 쿼리 길이 제한
             if (query.length() > 100) {
                 query = query.substring(0, 100);
             }
@@ -61,10 +61,6 @@ public class KakaoLocalSearchController {
         }
     }
 
-    /**
-     * 카테고리 검색 API
-     * GET /api/kakao/category?category_group_code=FD6&x=127.0&y=37.5&radius=1000&sort=distance
-     */
     @GetMapping("/category")
     public ResponseEntity<String> searchCategory(
             @RequestParam("category_group_code") String categoryCode,

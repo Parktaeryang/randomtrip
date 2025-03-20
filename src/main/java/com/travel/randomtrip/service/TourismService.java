@@ -23,24 +23,23 @@ public class TourismService {
 
     private static final String BASE_URL = "https://apis.data.go.kr/B551011/KorService1/searchKeyword1";
 
-    /**
-     * 랜덤 관광지명 반환
-     */
+    /* 관광지 API 호출 및 XML 파싱 후 랜덤 관광지 반환 */
     public Map<String, String> getRandomDestinationWithCoords(String keyword, Integer contentTypeId) {
         if (keyword == null || keyword.isBlank()) {
-            keyword = "서울";
+            keyword = "서울"; // 기본값 설정 (서울)
         }
 
         int totalCount = fetchTotalCount(keyword, contentTypeId);
         if (totalCount == 0) {
             return Map.of("name", "데이터가 없습니다.", "x", "", "y", "");
         }
-
+        // 전체 데이터 수 중 랜덤한 위치를 골라 페이지 및 항목 인덱스 계산
         int randIndex = new Random().nextInt(totalCount) + 1;
         int pageSize = 10;
         int pageNo = (randIndex - 1) / pageSize + 1;
         int itemIndex = (randIndex - 1) % pageSize;
 
+        // 동기 방식의 REST 호출
         String url = buildUrl(keyword, contentTypeId, pageSize, pageNo);
         ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
         String xml = response.getBody();
@@ -48,6 +47,7 @@ public class TourismService {
             return Map.of("name", "데이터가 없습니다.", "x", "", "y", "");
         }
 
+        // XML 파싱을 통한 데이터 추출
         Pattern titlePattern = Pattern.compile("<title>(?:<!\\[CDATA\\[)?(.*?)(?:]]>)?</title>");
         Pattern mapXPattern = Pattern.compile("<mapx>(.*?)</mapx>");
         Pattern mapYPattern = Pattern.compile("<mapy>(.*?)</mapy>");
@@ -68,6 +68,7 @@ public class TourismService {
             return Map.of("name", "데이터가 없습니다.", "x", "", "y", "");
         }
 
+        // 랜덤 선택된 관광지 이름과 좌표를 반환
         return Map.of(
                 "name", titles.get(itemIndex),
                 "x", xs.get(itemIndex),
@@ -75,7 +76,7 @@ public class TourismService {
         );
     }
 
-
+    /* 전체 데이터 수를 얻기 위한 API 호출 (동기 방식) */
     private int fetchTotalCount(String keyword, Integer contentTypeId) {
         String url = buildUrl(keyword, contentTypeId, 1, 1);
         String xml = restTemplate.getForObject(url, String.class);
@@ -89,6 +90,7 @@ public class TourismService {
         return 0;
     }
 
+    /* URL을 조합하는 헬퍼 메소드 (코드 중복 최소화 목적) */
     private String buildUrl(String keyword, Integer contentTypeId, int numOfRows, int pageNo) {
         StringBuilder sb = new StringBuilder(BASE_URL);
         sb.append("?serviceKey=").append(serviceKey);

@@ -5,17 +5,36 @@ import InfoTooltip from './components/InfoTooltip';
 const { Header, Content, Footer } = Layout;
 const { Option } = Select;
 
+/* React 함수형 컴포넌트 (Hook 기반) */
 function App() {
+    /* 사용자 입력값 (검색 키워드) */
     const [keyword, setKeyword] = useState('');
+
+    /* 관광지 유형 선택값 관리 */
     const [contentTypeId, setContentTypeId] = useState('');
+
+    /* 현재 선택된 관광지 정보 상태 관리 */
     const [place, setPlace] = useState({ name: '', x: '', y: '' });
+
+    /* 카테고리 검색 결과 목록 상태 관리 */
     const [places, setPlaces] = useState([]);
+
+    /* 카카오 지도 인스턴스를 저장하기 위한 Ref 객체 */
     const mapRef = useRef(null);
+
+    /* 지도에 표시된 마커 객체들을 저장하는 Ref 배열 */
     const markersRef = useRef([]);
+
+    /* 지도 마커 클릭 시 나타나는 정보창(InfoWindow) 객체를 관리하는 Ref 객체 */
     const infoWindowRef = useRef(null);
+
+    /* 백엔드 서버 URL 환경변수로 관리 */
     const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
-
+    /*
+     백엔드로부터 최초로 랜덤 관광지를 받아오는 함수 (비동기 방식)
+     useCallback을 사용하여 함수가 매번 재생성되지 않도록 최적화
+    */
     const fetchBackendData = useCallback(async () => {
         try {
             const res = await axios.get(`${backendUrl}/api/destination/random`);
@@ -25,14 +44,14 @@ function App() {
         }
     }, [backendUrl]);
 
-
+    /* 컴포넌트 최초 렌더링 시 실행 (백엔드에서 랜덤 관광지 데이터 로딩) */
     useEffect(() => {
         fetchBackendData();
     }, [fetchBackendData]);
 
 
 
-    // 지도 마커 초기화
+    /* 지도 상의 모든 마커와 정보창 초기화 */
     const clearMarkers = () => {
         markersRef.current.forEach(marker => marker.setMap(null));
         markersRef.current = [];
@@ -42,9 +61,9 @@ function App() {
         }
     };
 
-    // 랜덤 관광지 검색
+    /* 사용자가 입력한 키워드 및 선택한 카테고리를 기반으로 랜덤 관광지 정보 요청 (비동기 방식) */
     const handleFetchRandom = async () => {
-        clearMarkers();
+        clearMarkers(); // 기존 마커 제거
         try {
             const res = await axios.get(`${backendUrl}/api/destination/random`, {
                 params: { keyword, contentTypeId }
@@ -58,8 +77,8 @@ function App() {
                 return;
             }
 
-            setPlace({ name, x, y });
-            drawMap(y, x, name);
+            setPlace({ name, x, y }); // 상태 업데이트
+            drawMap(y, x, name);           // 지도에 마커 표시
         } catch (err) {
             console.error("API 요청 오류:", err);
         }
@@ -72,20 +91,22 @@ function App() {
             return;
         }
 
-        const mapContainer = document.getElementById('map');
+        const mapContainer = document.getElementById('map'); // 지도를 표시할 DOM Element 지정
         const mapOption = {
-            center: new window.kakao.maps.LatLng(lat, lng),
-            level: 4,
+            center: new window.kakao.maps.LatLng(lat, lng), // 지도 중심 좌표
+            level: 4, // 지도 확대 레벨
         };
         const map = new window.kakao.maps.Map(mapContainer, mapOption);
-        mapRef.current = map;
+        mapRef.current = map; // 지도 객체를 Ref에 저장하여 나중에 재사용 가능
 
+        // 마커 생성 및 지도에 표시
         const marker = new window.kakao.maps.Marker({
             position: new window.kakao.maps.LatLng(lat, lng)
         });
         marker.setMap(map);
         markersRef.current.push(marker);
 
+        // 마커 클릭 시 정보창(InfoWindow) 표시
         const infowindow = new window.kakao.maps.InfoWindow({
             content: `<div style="padding:5px;font-size:14px;">${title}</div>`
         });
@@ -93,22 +114,20 @@ function App() {
         infoWindowRef.current = infowindow;
     };
 
+    /* 카카오 카테고리 검색 API 호출하여 관광지 주변 장소를 표시하는 함수 */
     const handleCategorySearch = async (categoryCode) => {
-        clearMarkers();
+        clearMarkers(); // 기존 지도 마커 초기화
         try {
-            const { x, y } = place;
+            const { x, y } = place; // 현재 관광지 좌표
             if (!x || !y) {
                 alert('먼저 랜덤 관광지를 검색해주세요.');
                 return;
             }
 
-
-
+            // 카테고리별 장소를 요청하는 API 호출
             const res = await axios.get(`${backendUrl}/api/kakao/category`, {
                 params: { category_group_code: categoryCode, x, y, radius: 15000, size: 15, sort: 'distance' }
             });
-
-
 
             const data = res.data.documents;
 
@@ -118,9 +137,9 @@ function App() {
                 return;
             }
 
-            setPlaces(data); // 목록 업데이트
+            setPlaces(data); // 검색된 장소 목록 상태 업데이트
 
-            //  지도에 마커 추가
+            // 지도에 각 장소별 마커 추가
             data.forEach(place => {
                 const markerPosition = new window.kakao.maps.LatLng(place.y, place.x);
                 const marker = new window.kakao.maps.Marker({
